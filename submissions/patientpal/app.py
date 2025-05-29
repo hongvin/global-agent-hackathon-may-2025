@@ -9,6 +9,7 @@ import uuid
 import time
 from pathlib import Path
 from dotenv import load_dotenv
+from groq import Groq
 
 load_dotenv()
 
@@ -79,6 +80,9 @@ def process_consultation(audio_file=None, text_input=None, image_file=None, user
         
         return result["summary"], result["transcription"], formatted_terms, user_id
     except Exception as e:
+        import traceback
+        print(f"Error in process_consultation: {str(e)}")
+        print(traceback.format_exc())
         return f"Error processing consultation: {str(e)}", None, "[]", user_id
 
 def explain_term(term, context, user_id):
@@ -226,6 +230,53 @@ def term_clicked(evt: gr.SelectData, terms_json, user_id):
     except Exception as e:
         return f"Error processing term selection: {str(e)}"
 
+def extract_medications_from_summary(summary, user_id):
+    """Extract medications from consultation summary."""
+    if user_id is None or user_id not in active_users:
+        return "Session expired. Please refresh the page."
+    
+    if not summary or summary.strip() == "":
+        return "No consultation summary available. Process a consultation first."
+    
+    try:
+        # Use Groq API to extract medications from summary
+        api_key = os.getenv("GROQ_API_KEY")
+        client = Groq(api_key=api_key)
+        
+        system_prompt = """
+        You are a medication extraction assistant. Extract all medications mentioned in the consultation summary.
+        
+        For each medication, include:
+        - Name
+        - Dosage
+        - Frequency
+        - Timing information (when available)
+        
+        Format each medication on a new line.
+        Example:
+        Metformin 500mg twice daily with meals
+        Lisinopril 10mg once daily in the morning
+        """
+        
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Extract medications from this consultation summary: {summary}"}
+            ]
+        )
+        
+        # Extract the medications from the response
+        medications = response.choices[0].message.content.strip()
+        
+        if not medications or medications.lower().startswith("no medication") or medications.lower() == "none":
+            return "No medications found in the consultation summary."
+        
+        return medications
+        
+    except Exception as e:
+        return f"Error extracting medications: {str(e)}"
+
 # Create the Gradio interface
 with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as app:
     # Hidden state for user session
@@ -274,6 +325,8 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
                         interactive=False
                     )
                     
+                    extract_meds_btn = gr.Button("Extract Medications to Management Tab", variant="secondary")
+                    
                     gr.Markdown("### Transcription")
                     transcription_output = gr.Textbox(
                         label="Full Transcription",
@@ -301,7 +354,7 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
         # Medications tab
         with gr.TabItem("Medication Management"):
             gr.Markdown("### Enter your medication details")
-            gr.Markdown("Enter each medication on a new line with details like name, dosage, frequency, and when to take it.")
+            gr.Markdown("Enter each medication on a new line with details like name, dosage, frequency, and when to take it. You can also extract medications automatically from your consultation summary.")
             
             medication_input = gr.Textbox(
                 label="Medication Details",
@@ -362,6 +415,13 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
         fn=get_reminders,
         inputs=[user_id],
         outputs=[reminders_output]
+    )
+    
+    # Add event handler for extracting medications
+    extract_meds_btn.click(
+        fn=extract_medications_from_summary,
+        inputs=[summary_output, user_id],
+        outputs=[medication_input]
     )
     
 # Launch the app

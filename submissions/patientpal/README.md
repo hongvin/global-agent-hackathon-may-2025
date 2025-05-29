@@ -21,7 +21,7 @@ To build and demonstrate an open-source AI agent system that assists users in:
 3. The agent displays a summary of the consultation and highlights potentially complex medical terms.
 4. The user can click on a highlighted term.
 5. The agent retrieves and presents a simplified explanation of the term using Retrieval-Augmented Generation (RAG) from a curated knowledge source.
-6. Separately, the user manually inputs medication details (name, dosage, frequency, timing instructions) from their prescription into a simple form or just snap the prescription label.
+6. The user can automatically extract medications from the consultation summary with a single click, or manually input medication details (name, dosage, frequency, timing instructions) from their prescription into a simple form or just snap the prescription label.
 7. The agent parses this input, generates a structured daily/weekly medication schedule, and displays it.
 8. The agent sets up and triggers notifications/reminders for upcoming medication doses.
 
@@ -63,20 +63,106 @@ A simple, clean web-based interface built with Streamlit or Gradio. Key componen
 
 ## Visuals
 
-We plan to include:
+### High-Level Architecture
 
-- A high-level architecture diagram showing how the agent components and tools interact.
-- Simple wireframes or mockups of the user interface.
-- A user flow diagram illustrating the steps described in "How It Works".
+```mermaid
+graph TD
+    U1[User: Upload Audio/Image/Text] --> STT[Transcription Service]
+    U1 --> OCR[Image Processing]
+    U1 --> TXT[Text Input]
+    
+    STT --> SUM[Summarization & Term ID]
+    OCR --> SUM
+    TXT --> SUM
+    
+    SUM --> U2[User: View Summary & Terms]
+    U2 --> RAG[Term Explanation RAG]
+    RAG --> MEM0[Persistent Memory]
+    
+    U2 --> U3[User: Extract Medications]
+    U3 --> MEDS[Medication Management]
+    
+    U4[User: Input/Edit Medications] --> MEDS
+    MEDS --> MEM0
+    
+    MEDS --> SCHED[Schedule Generation]
+    SCHED --> U5[User: View Schedule & Reminders]
+    SCHED --> REM[Reminders]
+    REM --> U5
+    
+    SUM --> MEM0
+```
+
+### User Flow
+
+```mermaid
+sequenceDiagram
+    Patient->>WebUI: Upload audio/image/text
+    WebUI->>Orchestrator: Send input
+    Orchestrator->>GroqAPI: Process content
+    GroqAPI-->>Orchestrator: Return analysis
+    Orchestrator->>Mem0: Store data
+    Orchestrator->>WebUI: Display summary & terms
+    Patient->>WebUI: Click term for explanation
+    WebUI->>Orchestrator: Request explanation
+    Orchestrator->>SearchAPI: Query medical sources
+    SearchAPI-->>Orchestrator: Return explanation
+    Orchestrator->>WebUI: Show explanation
+    Patient->>WebUI: Extract or input medications
+    WebUI->>Orchestrator: Process medications
+    Orchestrator->>GroqAPI: Generate schedule
+    GroqAPI-->>Orchestrator: Return structured schedule
+    Orchestrator->>Scheduler: Set reminders
+    Orchestrator->>Mem0: Store medication data
+    Orchestrator->>WebUI: Display schedule & reminders
+```
+
+### UI Wireframe
+
+```
++-------------------------------------------------------+
+| PatientPal                                            |
++-------------------------------------------------------+
+| [Upload Audio] [Upload Image] [Paste/Type Notes]      |
++-------------------------------------------------------+
+| [Process Consultation]                                |
++-------------------------------------------------------+
+| Summary:                                              |
+| Lorem ipsum dolor sit amet, consectetur adipiscing... |
+|                                                       |
+| [Extract Medications to Management Tab]               |
++-------------------------------------------------------+
+| Transcription:                                        |
+| Lorem ipsum dolor sit amet, consectetur adipiscing... |
++-------------------------------------------------------+
+| Medical Terms:                                        |
+| [hypertension] [metformin] [type 2 diabetes]          |
+|                                                       |
+| Explanation:                                          |
+| Selected term explanation appears here...             |
++-------------------------------------------------------+
+|                                                       |
+| [Medication Management Tab]                           |
+|                                                       |
+| Metformin 500mg twice daily with meals               |
+| Lisinopril 10mg once daily in the morning            |
+|                                                       |
+| [Generate Schedule]                                   |
+|                                                       |
+| Morning:                                              |
+| • 8:00 AM: Lisinopril 10mg                           |
+| Afternoon:                                            |
+| • 12:00 PM: Metformin 500mg (with lunch)             |
+| Evening:                                              |
+| • 6:00 PM: Metformin 500mg (with dinner)             |
+|                                                       |
+| [Check Upcoming Reminders]                            |
++-------------------------------------------------------+
+```
+
 
 ## Team Information
 - **Team Lead**: [hongvin](https://github.com/hongvin)
 - **Team Members**: Currently solo.
 - **Background/Experience**: I have a PhD with a specialization in Artificial Intelligence and Computer Vision. Currently actively researching and deploying LLM applications, bringing strong technical expertise in the core technologies required for this project.
 
-
-## Demo Video Link
-Once completed, add a link to your 2-3 minute demo video.
-
-## Additional Notes
-Any other information you'd like to share about your project.

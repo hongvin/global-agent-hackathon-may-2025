@@ -10,8 +10,8 @@
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/patientpal.git
-cd patientpal
+git clone https://github.com/global-agent-hackathon/global-agent-hackathon-may-2025
+cd submissions/patientpal
 ```
 
 2. Set up environment variables:
@@ -57,7 +57,9 @@ docker run -p 7860:7860 -v $(pwd)/data:/app/data patientpal
 4. Click on any highlighted medical term to see a plain-language explanation
 
 ### Medication Management
-1. Enter your medication details in the text box, one medication per line
+1. You can either:
+   - Click the "Extract Medications to Management Tab" button after processing a consultation, or
+   - Enter your medication details manually in the text box, one medication per line
 2. Format: Name, dosage, frequency, and timing instructions
 3. Click "Generate Schedule"
 4. View your personalized medication schedule

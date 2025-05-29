@@ -21,15 +21,21 @@ class ImageProcessingService:
         Extract text from an image of consultation notes.
         
         Args:
-            image_file: File-like object containing image data
+            image_file: Either a file-like object or a string path to an image file
             
         Returns:
             str: Extracted text
         """
-        # Save the uploaded image to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
-            tmp_file.write(image_file.read())
-            tmp_path = tmp_file.name
+        # Handle the case where image_file is a string path
+        if isinstance(image_file, str):
+            tmp_path = image_file
+            need_cleanup = False
+        else:
+            # Save the uploaded image to a temporary file if it's a file-like object
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+                tmp_file.write(image_file.read())
+                tmp_path = tmp_file.name
+            need_cleanup = True
         
         try:
             # In a real implementation, you would use an OCR service
@@ -59,5 +65,6 @@ class ImageProcessingService:
             return extracted_text
         
         finally:
-            # Clean up the temporary file
-            os.unlink(tmp_path)
+            # Clean up the temporary file only if we created one
+            if need_cleanup:
+                os.unlink(tmp_path)
