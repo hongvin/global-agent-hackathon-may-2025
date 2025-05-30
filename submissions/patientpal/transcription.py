@@ -11,25 +11,31 @@ class TranscriptionService:
         self.client = Groq(api_key=api_key)
         
     def transcribe(self, audio_file):
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_file:
-            tmp_file.write(audio_file.read())
-            tmp_path = tmp_file.name
+        if isinstance(audio_file, str):
+            # If it's already a path (from Gradio), use it directly
+            tmp_path = audio_file
+            need_cleanup = False
+        else:
+            # If it's a file-like object, read and save it
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_file:
+                tmp_file.write(audio_file.read())
+                tmp_path = tmp_file.name
+            need_cleanup = True
         
         try:
-            response = self.client.chat.completions.create(
-                model="llama3-8b-8192",
-                messages=[
-                    {"role": "system", "content": "You are a medical transcription service. Convert the following audio to text."},
-                    {"role": "user", "content": f"Transcribe the audio file: {Path(tmp_path).name}"}
-                ],
-            )
-            
-            transcription = "This is a simulated transcription of a medical consultation. " + \
-                            "The patient has been diagnosed with hypertension and type 2 diabetes. " + \
-                            "The doctor recommends starting on metformin 500mg twice daily and " + \
-                            "lisinopril 10mg once daily in the morning."
+            # Use Groq's Whisper API for transcription
+            with open(tmp_path, "rb") as audio_file_obj:
+                transcription = self.client.audio.transcriptions.create(
+                    file=audio_file_obj,
+                    model="whisper-large-v3",
+                    prompt="This is a medical consultation recording. Please transcribe accurately including medical terminology.",
+                    response_format="text",
+                    language="en",
+                    temperature=0.0
+                )
             
             return transcription
         
         finally:
-            os.unlink(tmp_path)
+            if need_cleanup:
+                os.unlink(tmp_path)

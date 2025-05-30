@@ -277,7 +277,7 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
                     audio_input = gr.Audio(
                         label="Upload Audio Recording", 
                         type="filepath",
-                        sources=["microphone"]
+                        sources=["microphone","upload"],
                     )
                     
                     image_input = gr.Image(
