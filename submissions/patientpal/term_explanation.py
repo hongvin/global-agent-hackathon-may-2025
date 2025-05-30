@@ -25,7 +25,6 @@ class TermExplanationService:
         self.client = Groq(api_key=api_key)
         self.rag_initialized = False
         
-        # Try to initialize RAG components if web search APIs are available
         try:
             self.initialize_rag()
             self.rag_initialized = True
@@ -34,21 +33,13 @@ class TermExplanationService:
     
     def initialize_rag(self):
         """Initialize the RAG components if the necessary API keys are available."""
-        # This is a simplified implementation. In a real application, you would:
-        # 1. Set up a proper RAG pipeline with Firecrawl or Exa
-        # 2. Create a medical knowledge vectorstore
-        # 3. Configure appropriate search and filtering
-        
-        # For demonstration purposes, we'll use a simple implementation
         self.llm = ChatGroq(
             groq_api_key=os.getenv("GROQ_API_KEY"),
             model_name="llama3-8b-8192"
         )
         
-        # In a real implementation, you would use Firecrawl or Exa for web search
         # self.search_tool = FirecrawlSearchTool(api_key=os.getenv("FIRECRAWL_API_KEY"))
         
-        # For now, we'll simulate the RAG capability
     
     def explain_term(self, term, context=None):
         """
@@ -62,8 +53,6 @@ class TermExplanationService:
             dict: Contains 'explanation' text and 'sources' if available
         """
         if self.rag_initialized:
-            # In a real implementation, use the RAG pipeline
-            # For now, we'll simulate with a direct LLM call
             pass
         
         system_prompt = """
@@ -91,12 +80,10 @@ class TermExplanationService:
             response_format={"type": "json_object"}
         )
         
-        # Parse the JSON response
         try:
             result = json.loads(response.choices[0].message.content)
             return result
         except json.JSONDecodeError:
-            # Fallback if the response is not valid JSON
             return {
                 "explanation": "Failed to generate explanation. Please try again.",
                 "sources": []

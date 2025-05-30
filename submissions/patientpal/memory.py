@@ -20,7 +20,6 @@ class Mem0Service:
         else:
             self._use_simulation = False
             
-        # For simulation
         self._memory_store = {}
     
     def store_consultation(self, user_id, consultation_data):
@@ -51,7 +50,6 @@ class Mem0Service:
                 self._memory_store[user_id] = {"consultations": [], "medications": [], "explanations": []}
             self._memory_store[user_id]["consultations"].append(data)
         else:
-            # In a real implementation, you would use Mem0 API to store this data
             # mem0_client.store(data)
             pass
             
@@ -85,7 +83,6 @@ class Mem0Service:
                 self._memory_store[user_id] = {"consultations": [], "medications": [], "explanations": []}
             self._memory_store[user_id]["medications"].append(data)
         else:
-            # In a real implementation, you would use Mem0 API to store this data
             # mem0_client.store(data)
             pass
             
@@ -121,7 +118,6 @@ class Mem0Service:
                 self._memory_store[user_id] = {"consultations": [], "medications": [], "explanations": []}
             self._memory_store[user_id]["explanations"].append(data)
         else:
-            # In a real implementation, you would use Mem0 API to store this data
             # mem0_client.store(data)
             pass
             
@@ -142,7 +138,6 @@ class Mem0Service:
                 return self._memory_store[user_id]["consultations"]
             return []
         else:
-            # In a real implementation, you would use Mem0 API to retrieve this data
             # return mem0_client.query({"userId": user_id, "type": "consultation"})
             return []
     
@@ -161,7 +156,6 @@ class Mem0Service:
                 return self._memory_store[user_id]["medications"]
             return []
         else:
-            # In a real implementation, you would use Mem0 API to retrieve this data
             # return mem0_client.query({"userId": user_id, "type": "medication_schedule"})
             return []
     
@@ -184,7 +178,6 @@ class Mem0Service:
                 return explanations
             return []
         else:
-            # In a real implementation, you would use Mem0 API to retrieve this data
             # query = {"userId": user_id, "type": "explanation"}
             # if term:
             #     query["term"] = term

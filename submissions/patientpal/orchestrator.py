@@ -29,7 +29,6 @@ class AgnoOrchestrator:
         self.medication_service = medication_service
         self.memory_service = memory_service
         
-        # Check if Agno API key is available
         self.api_key = os.getenv("AGNO_API_KEY")
         if not self.api_key:
             print("Warning: AGNO_API_KEY not set. Using simulated orchestration.")
@@ -50,7 +49,6 @@ class AgnoOrchestrator:
         Returns:
             dict: Processed consultation data with summary and terms
         """
-        # Step 1: Get transcription or extract text from inputs
         if audio_file is not None:
             transcription = self.transcription_service.transcribe(audio_file)
         elif image_file is not None:
@@ -60,13 +58,10 @@ class AgnoOrchestrator:
         else:
             raise ValueError("Either audio_file, image_file, or text_input must be provided")
         
-        # Step 2: Generate summary and identify terms
         consultation_data = self.summary_service.summarize(transcription)
         
-        # Step 3: Store in memory
         consultation_id = self.memory_service.store_consultation(user_id, consultation_data)
         
-        # Return the processed data
         return {
             "id": consultation_id,
             "transcription": transcription,
@@ -86,20 +81,15 @@ class AgnoOrchestrator:
         Returns:
             dict: Term explanation data
         """
-        # Step 1: Check if we already have an explanation for this term
         existing_explanations = self.memory_service.get_term_explanations(user_id, term)
         
         if existing_explanations:
-            # Return the most recent explanation
             return existing_explanations[0]
         
-        # Step 2: Generate a new explanation
         explanation_data = self.explanation_service.explain_term(term, context)
         
-        # Step 3: Store the explanation
         explanation_id = self.memory_service.store_term_explanation(user_id, term, explanation_data)
         
-        # Return the explanation data
         return {
             "id": explanation_id,
             "term": term,
@@ -118,7 +108,6 @@ class AgnoOrchestrator:
         Returns:
             dict: Generated medication schedule
         """
-        # Step 1: Parse each medication input
         medications = []
         for med_input in medication_inputs:
             try:
@@ -128,19 +117,15 @@ class AgnoOrchestrator:
                 print(f"Error parsing medication: {e}")
                 continue
         
-        # Step 2: Generate a schedule
         daily_schedule = self.medication_service.generate_schedule(medications)
         
-        # Step 3: Set up reminders
         self.medication_service.setup_reminders(user_id, daily_schedule)
         
-        # Step 4: Store in memory
         schedule_id = self.memory_service.store_medication_schedule(
             user_id, 
             {"medications": [med.dict() for med in medications], "schedule": daily_schedule}
         )
         
-        # Return the schedule data
         return {
             "id": schedule_id,
             "medications": [med.dict() for med in medications],

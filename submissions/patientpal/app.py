@@ -72,10 +72,8 @@ def process_consultation(audio_file=None, text_input=None, image_file=None, user
     try:
         result = orchestrator.process_consultation(user_id, audio_file, text_input, image_file)
         
-        # Update the user session
         active_users[user_id]["consultations"].append(result)
         
-        # Format the terms for the UI
         formatted_terms = json.dumps(result["terms"])
         
         return result["summary"], result["transcription"], formatted_terms, user_id
@@ -96,10 +94,8 @@ def explain_term(term, context, user_id):
     try:
         result = orchestrator.explain_term(user_id, term, context)
         
-        # Update the user session
         active_users[user_id]["terms_explained"][term] = result
         
-        # Format the explanation for the UI
         explanation = result["explanation"]
         sources = ", ".join(result["sources"]) if result.get("sources") else "No sources available"
         
@@ -108,7 +104,6 @@ def explain_term(term, context, user_id):
         return f"Error explaining term: {str(e)}"
 
 def process_medications(medication_inputs, user_id):
-    """Process medication inputs and generate a schedule."""
     if user_id is None or user_id not in active_users:
         return "Session expired. Please refresh the page.", None
     
@@ -116,7 +111,6 @@ def process_medications(medication_inputs, user_id):
         return "Please enter medication details.", None
     
     try:
-        # Split by new lines to get individual medications
         med_list = [med.strip() for med in medication_inputs.split('\n') if med.strip()]
         
         if not med_list:
@@ -124,13 +118,10 @@ def process_medications(medication_inputs, user_id):
         
         result = orchestrator.process_medication(user_id, med_list)
         
-        # Update the user session
         active_users[user_id]["medications"].append(result)
         
-        # Format the schedule for the UI
         schedule_html = format_schedule_html(result["schedule"])
         
-        # Convert medications to formatted string for display
         medications_text = "\n".join([
             f"• {med['name']} ({med['dosage']}): {med['frequency']}, {med['timing']}"
             for med in result["medications"]
@@ -144,7 +135,6 @@ def format_schedule_html(schedule):
     """Format the medication schedule as HTML for the UI."""
     html = "<div style='text-align: left;'>"
     
-    # Morning schedule
     if "morningSchedule" in schedule and schedule["morningSchedule"]:
         html += "<h3>Morning</h3><ul>"
         for med in schedule["morningSchedule"]:
@@ -154,7 +144,6 @@ def format_schedule_html(schedule):
             html += "</li>"
         html += "</ul>"
     
-    # Afternoon schedule
     if "afternoonSchedule" in schedule and schedule["afternoonSchedule"]:
         html += "<h3>Afternoon</h3><ul>"
         for med in schedule["afternoonSchedule"]:
@@ -164,7 +153,6 @@ def format_schedule_html(schedule):
             html += "</li>"
         html += "</ul>"
     
-    # Evening schedule
     if "eveningSchedule" in schedule and schedule["eveningSchedule"]:
         html += "<h3>Evening</h3><ul>"
         for med in schedule["eveningSchedule"]:
@@ -174,7 +162,6 @@ def format_schedule_html(schedule):
             html += "</li>"
         html += "</ul>"
     
-    # Night schedule
     if "nightSchedule" in schedule and schedule["nightSchedule"]:
         html += "<h3>Night</h3><ul>"
         for med in schedule["nightSchedule"]:
@@ -198,7 +185,6 @@ def get_reminders(user_id):
         if not reminders:
             return "No upcoming medication reminders."
         
-        # Format the reminders for the UI
         reminders_text = "Upcoming medications:\n\n"
         for reminder in reminders:
             reminders_text += f"• {reminder['time']}: {reminder['name']} ({reminder['dosage']})"
@@ -239,7 +225,6 @@ def extract_medications_from_summary(summary, user_id):
         return "No consultation summary available. Process a consultation first."
     
     try:
-        # Use Groq API to extract medications from summary
         api_key = os.getenv("GROQ_API_KEY")
         client = Groq(api_key=api_key)
         
@@ -266,7 +251,6 @@ def extract_medications_from_summary(summary, user_id):
             ]
         )
         
-        # Extract the medications from the response
         medications = response.choices[0].message.content.strip()
         
         if not medications or medications.lower().startswith("no medication") or medications.lower() == "none":
@@ -277,9 +261,7 @@ def extract_medications_from_summary(summary, user_id):
     except Exception as e:
         return f"Error extracting medications: {str(e)}"
 
-# Create the Gradio interface
 with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as app:
-    # Hidden state for user session
     user_id = gr.State(None)
     terms_json = gr.State("[]")
     
@@ -287,7 +269,6 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
     gr.Markdown("### Understanding Consultations & Managing Medications")
     
     with gr.Tabs():
-        # Consultation tab
         with gr.TabItem("Consultation Analysis"):
             gr.Markdown("### Upload a recording, image, or enter notes from your medical consultation")
             
@@ -351,7 +332,6 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
                         interactive=False
                     )
         
-        # Medications tab
         with gr.TabItem("Medication Management"):
             gr.Markdown("### Enter your medication details")
             gr.Markdown("Enter each medication on a new line with details like name, dosage, frequency, and when to take it. You can also extract medications automatically from your consultation summary.")
@@ -388,7 +368,6 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
                 interactive=False
             )
     
-    # Event handlers
     process_btn.click(
         fn=process_consultation,
         inputs=[audio_input, text_input, image_input, user_id],
@@ -417,7 +396,6 @@ with gr.Blocks(title="PatientPal", theme=gr.themes.Soft(primary_hue="teal")) as 
         outputs=[reminders_output]
     )
     
-    # Add event handler for extracting medications
     extract_meds_btn.click(
         fn=extract_medications_from_summary,
         inputs=[summary_output, user_id],

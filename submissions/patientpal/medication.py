@@ -94,7 +94,6 @@ class MedicationSchedulingService:
         }
         """
         
-        # Format medications as JSON string to send to the LLM
         medications_json = json.dumps([med.dict() for med in medications])
         
         response = self.client.chat.completions.create(
@@ -129,14 +128,7 @@ class MedicationSchedulingService:
         Returns:
             bool: Success status
         """
-        # For demonstration purposes, we'll just print the schedule
-        # In a real app, this would set up actual reminders using a notification service
-        
-        # Store the schedule for this user
         self.schedules[user_id] = daily_schedule
-        
-        # In a real implementation, you would use schedule library to set up recurring jobs
-        # that send notifications at the scheduled times
         
         return True
     
@@ -156,13 +148,8 @@ class MedicationSchedulingService:
         schedule = self.schedules[user_id]
         current_time = datetime.datetime.now()
         
-        # Find the next medications due
         upcoming = []
         
-        # In a real implementation, you would compare the current time with scheduled times
-        # and return medications that are coming up soon
-        
-        # For demonstration, just return the morning schedule
         if "morningSchedule" in schedule and schedule["morningSchedule"]:
             for med in schedule["morningSchedule"]:
                 upcoming.append({
