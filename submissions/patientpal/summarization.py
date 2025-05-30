@@ -1,30 +1,15 @@
-"""
-Consultation summarization service for PatientPal.
-Summarizes medical consultations and identifies key medical terms.
-"""
-
 import os
 import json
 from groq import Groq
 
 class ConsultationSummaryService:
     def __init__(self):
-        """Initialize the consultation summary service using Groq API."""
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise ValueError("GROQ_API_KEY environment variable is not set")
         self.client = Groq(api_key=api_key)
     
     def summarize(self, transcription):
-        """
-        Summarize the consultation transcription and identify key medical terms.
-        
-        Args:
-            transcription (str): Transcription text from medical consultation
-            
-        Returns:
-            dict: Contains 'summary' text and 'terms' list of identified medical terms
-        """
         system_prompt = """
         You are a medical assistant helping patients understand their doctor consultations.
         Given a transcription of a medical consultation, provide:
@@ -50,12 +35,10 @@ class ConsultationSummaryService:
             response_format={"type": "json_object"}
         )
         
-        # Parse the JSON response
         try:
             result = json.loads(response.choices[0].message.content)
             return result
         except json.JSONDecodeError:
-            # Fallback if the response is not valid JSON
             return {
                 "summary": "Failed to generate summary. Please try again.",
                 "terms": []
